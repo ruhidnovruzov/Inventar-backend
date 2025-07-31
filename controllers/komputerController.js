@@ -8,9 +8,7 @@ exports.komputerElaveEt = async (req, res) => {
     await yeniKomputer.save();
     res.status(201).json(yeniKomputer);
   } catch (err) {
-    // Seriya nömrəsi yox olduğu üçün 11000 duplicate key error-u ehtimalı azalır.
-    // Lakin korpus və say birlikdə unikal olsaydı, yenə də ola bilərdi.
-    // Hal-hazırda modeldə yalnız say və korpus olduğu üçün əlavə unikal constrain yoxdur.
+    // Modelə əlavə olunan 'kategoriya' sahəsi də burada validasiya olunacaq.
     res.status(400).json({ message: err.message });
   }
 };
@@ -18,6 +16,10 @@ exports.komputerElaveEt = async (req, res) => {
 // Bütün kompüterləri gətir
 exports.butunKomputerleriGetir = async (req, res) => {
   try {
+    // Əgər kateqoriya üzrə filterləmə tələb olunarsa, query parametri əlavə edilə bilər.
+    // Məsələn: const { kategoriya } = req.query;
+    // const filter = kategoriya ? { kategoriya } : {};
+    // const komputerler = await Komputer.find(filter);
     const komputerler = await Komputer.find();
     res.status(200).json(komputerler);
   } catch (err) {
@@ -41,14 +43,13 @@ exports.komputeriIdIleGetir = async (req, res) => {
 // Kompüteri yenilə
 exports.komputeriYenile = async (req, res) => {
   try {
-    // `runValidators: true` yeni modelə uyğun olaraq korpus və sayın doğrulanmasını təmin edəcək.
+    // `runValidators: true` yeni modelə uyğun olaraq 'kategoriya' sahəsinin də doğrulanmasını təmin edəcək.
     const komputer = await Komputer.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!komputer) {
       return res.status(404).json({ message: 'Kompüter tapılmadı.' });
     }
     res.status(200).json(komputer);
   } catch (err) {
-    // Seriya nömrəsi yox olduğu üçün 11000 duplicate key error-u yoxlanılmasına ehtiyac qalmır.
     res.status(400).json({ message: err.message });
   }
 };
@@ -67,28 +68,17 @@ exports.komputeriSil = async (req, res) => {
 };
 
 // Korpus üzrə kompüterləri gətir və sayını göstər
-// Bu funksiya əvvəlki kimi qalır, çünki korpus üzrə filterləmə aparır.
 exports.korpusUzreKomputerleriGetir = async (req, res) => {
   try {
     const { korpus } = req.params;
-    // Bütün `korpus` dəyərləri üçün `find` metodu işləyir.
-    // Lakin, əgər siz yalnız müəyyən bir korpus üzrə kompüterləri görmək istəyirsinizsə,
-    // bu funksiya yerinə yetirilmiş olar.
-    // Sadələşdirilmiş modeldə hər sətir tək bir korpusdakı `say`ı təmsil edir.
     const komputerler = await Komputer.find({ korpus: korpus });
     if (komputerler.length === 0) {
       return res.status(404).json({ message: `${korpus} korpusunda kompüter tapılmadı.` });
     }
-    // Əvvəlki modeldə hər kompüter ayrı bir obyekt idi, indi isə hər obyekt bir korpusda bir saydır.
-    // Ona görə bu endpointin məntiqi dəyişir. Artıq `komputerler.length` ümumi say deyil,
-    // həmin korpus üçün olan ayrı-ayrı qeydlərin sayıdır.
-    // Əgər siz bir korpus üçün cəmi say istəyirsinizsə, aşağıdakı `korpuslarUzreCemSay`
-    // funksiyasından istifadə etməli və nəticəni filterləməlisiniz.
-    // Bu endpoint dəyişən modelə uyğun deyil, lakin saxlanılır.
     res.status(200).json({
       korpus: korpus,
-      qeyd_sayi: komputerler.length, // Bu, həmin korpusda neçə ayrı qeyd olduğunu göstərir
-      komputerler_qeydleri: komputerler // Həmin korpusun qeydlərini göstərir
+      qeyd_sayi: komputerler.length,
+      komputerler_qeydleri: komputerler
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -102,7 +92,7 @@ exports.korpuslarUzreCemSay = async (req, res) => {
       {
         $group: {
           _id: "$korpus",
-          say: { $sum: "$say" } // Hər korpus üçün 'say' sahəsini toplayırıq
+          say: { $sum: "$say" }
         }
       },
       {

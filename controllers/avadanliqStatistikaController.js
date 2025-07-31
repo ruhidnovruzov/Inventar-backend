@@ -3,16 +3,43 @@ const Komputer = require('../models/Komputer');
 const Printer = require('../models/Printer');
 const Proyektor = require('../models/Proyektor');
 const Monitor = require('../models/Monitor');
+const Monoblok = require('../models/Monoblok');
+const IpTelefon = require('../models/IpTelefon'); // Yeni: IpTelefon modelini import edin
 const TexnikiGosterici = require('../models/TexnikiGosterici');
 
-// Bütün avadanlıqların ümumi sayını gətir
+// Bütün avadanlıqların ümumi sayını gətirən funksiya
 exports.umumiAvadanliqSaylari = async (req, res) => {
   try {
-    // Kompüterlərin sayını 'say' sahəsinin cəmi olaraq hesablayırıq
     const komputerSayiDetal = await Komputer.aggregate([
       { $group: { _id: null, total: { $sum: "$say" } } }
     ]);
     const komputerSayi = komputerSayiDetal.length > 0 ? komputerSayiDetal[0].total : 0;
+
+    // Kompüter kateqoriyaları üzrə sayları hesabla
+    const auditoriyaKomputerSayiDetal = await Komputer.aggregate([
+      { $match: { kategoriya: 'Auditoriya' } },
+      { $group: { _id: null, total: { $sum: "$say" } } }
+    ]);
+    const auditoriyaKomputerSayi = auditoriyaKomputerSayiDetal.length > 0 ? auditoriyaKomputerSayiDetal[0].total : 0;
+
+    const inzibatiKomputerSayiDetal = await Komputer.aggregate([
+      { $match: { kategoriya: 'İnzibati' } },
+      { $group: { _id: null, total: { $sum: "$say" } } }
+    ]);
+    const inzibatiKomputerSayi = inzibatiKomputerSayiDetal.length > 0 ? inzibatiKomputerSayiDetal[0].total : 0;
+
+    const akademikKomputerSayiDetal = await Komputer.aggregate([
+      { $match: { kategoriya: 'Akademik' } },
+      { $group: { _id: null, total: { $sum: "$say" } } }
+    ]);
+    const akademikKomputerSayi = akademikKomputerSayiDetal.length > 0 ? akademikKomputerSayiDetal[0].total : 0;
+
+    const digerKomputerSayiDetal = await Komputer.aggregate([
+      { $match: { kategoriya: 'Digər' } },
+      { $group: { _id: null, total: { $sum: "$say" } } }
+    ]);
+    const digerKomputerSayi = digerKomputerSayiDetal.length > 0 ? digerKomputerSayiDetal[0].total : 0;
+
 
     const printerSayiDetal = await Printer.aggregate([
       { $group: { _id: null, total: { $sum: "$say" } } }
@@ -29,10 +56,21 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
     ]);
     const monitorSayi = monitorSayiDetal.length > 0 ? monitorSayiDetal[0].total : 0;
 
+    const monoblokSayiDetal = await Monoblok.aggregate([
+      { $group: { _id: null, total: { $sum: "$say" } } }
+    ]);
+    const monoblokSayi = monoblokSayiDetal.length > 0 ? monoblokSayiDetal[0].total : 0;
+
+    const ipTelefonSayi = await IpTelefon.countDocuments(); // Yeni: IP Telefonların ümumi sayı
+
     res.status(200).json({
       komputerler: {
-        umumiSay: komputerSayi, // İndi bu, 'say' sahəsinin cəmi olacaq
-        qeydler: "Korpuslar üzrə ümumi kompüter sayı." // Açıqlamanı yenilədik
+        umumiSay: komputerSayi,
+        auditoriyaSay: auditoriyaKomputerSayi,
+        inzibatiSay: inzibatiKomputerSayi,
+        akademikSay: akademikKomputerSayi,
+        digerSay: digerKomputerSayi,
+        qeydler: "Korpuslar üzrə ümumi kompüter sayı."
       },
       printerler: {
         umumiSay: printerSayi,
@@ -45,6 +83,14 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
       monitorlar: {
         umumiSay: monitorSayi,
         qeydler: "Korpuslar üzrə ümumi monitor sayı."
+      },
+      monobloklar: {
+        umumiSay: monoblokSayi,
+        qeydler: "Korpuslar üzrə ümumi monoblok sayı."
+      },
+      ipTelefonlar: { // Yeni: IP Telefonlar statistikası
+        umumiSay: ipTelefonSayi,
+        qeydler: "Ümumi IP telefon sayı."
       }
     });
   } catch (err) {
@@ -52,12 +98,10 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
   }
 };
 
-// Texniki göstəricilərin sayını gətir (məsələn, CPU, RAM sayları)
-// Bu funksiya dəyişmir, çünki frontend-də bütün parametrlərin cəmini hesablayacağıq.
+// Bu funksiyalar dəyişmir, lakin tam olması üçün daxil edilib
 exports.texnikiGostericiSaylari = async (req, res) => {
   try {
     const texnikiGostericiler = await TexnikiGosterici.find();
-
     const result = texnikiGostericiler.map(gosterici => ({
       parametrAd: gosterici.parametrAd,
       deyerler: gosterici.parametrinDeyerleri.map(deyer => ({
@@ -65,19 +109,16 @@ exports.texnikiGostericiSaylari = async (req, res) => {
         say: deyer.say
       }))
     }));
-
     res.status(200).json(result);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Bütün avadanlıqların korpuslar üzrə ümumi icmalını gətir
-// Bu funksiya dəyişmir, çünki kompüterlər üçün `$sum: 1` yerinə `$sum: "$say"` istifadə edir.
 exports.korpuslarUzreAvadanliqIcmali = async (req, res) => {
   try {
     const komputerlerByKorpus = await Komputer.aggregate([
-      { $group: { _id: "$korpus", say: { $sum: "$say" } } }, // Kompüterlər üçün 'say' sahəsinin cəmini toplayırıq
+      { $group: { _id: "$korpus", say: { $sum: "$say" } } },
       { $project: { korpus: "$_id", say: 1, _id: 0 } }
     ]);
 
@@ -96,17 +137,24 @@ exports.korpuslarUzreAvadanliqIcmali = async (req, res) => {
       { $project: { korpus: "$_id", say: 1, _id: 0 } }
     ]);
 
+    const monobloklarByKorpus = await Monoblok.aggregate([
+      { $group: { _id: "$korpus", say: { $sum: "$say" } } },
+      { $project: { korpus: "$_id", say: 1, _id: 0 } }
+    ]);
+
     const allKorpuslar = new Set();
     komputerlerByKorpus.forEach(item => allKorpuslar.add(item.korpus));
     printerlerByKorpus.forEach(item => allKorpuslar.add(item.korpus));
     proyektorlarByKorpus.forEach(item => allKorpuslar.add(item.korpus));
     monitorlarByKorpus.forEach(item => allKorpuslar.add(item.korpus));
+    monobloklarByKorpus.forEach(item => allKorpuslar.add(item.korpus));
 
     const icmal = Array.from(allKorpuslar).map(korpus => {
       const komputerSay = komputerlerByKorpus.find(item => item.korpus === korpus)?.say || 0;
       const printerSay = printerlerByKorpus.find(item => item.korpus === korpus)?.say || 0;
       const proyektorSay = proyektorlarByKorpus.find(item => item.korpus === korpus)?.say || 0;
       const monitorSay = monitorlarByKorpus.find(item => item.korpus === korpus)?.say || 0;
+      const monoblokSay = monobloklarByKorpus.find(item => item.korpus === korpus)?.say || 0;
 
       return {
         korpus: korpus,
@@ -114,7 +162,8 @@ exports.korpuslarUzreAvadanliqIcmali = async (req, res) => {
         printerSayi: printerSay,
         proyektorSayi: proyektorSay,
         monitorSayi: monitorSay,
-        korpusUzreCemi: komputerSay + printerSay + proyektorSay + monitorSay
+        monoblokSayi: monoblokSay,
+        korpusUzreCemi: komputerSay + printerSay + proyektorSay + monitorSay + monoblokSay
       };
     });
 

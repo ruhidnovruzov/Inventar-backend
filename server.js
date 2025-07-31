@@ -10,6 +10,9 @@ const printerRoutes = require('./routes/printerRoutes');
 const proyektorRoutes = require('./routes/proyektorRoutes');
 const monitorRoutes = require('./routes/monitorRoutes');
 const avadanliqStatistikaRoutes = require('./routes/avadanliqStatistikaRoutes'); // YENİ
+const monoblokRoutes = require('./routes/monoblokRoutes.js'); // Yeni: Monoblok route
+const IpTelefonRoutes = require('./routes/ipTelefonRoutes'); // Yeni: IP Telefon route
+
  
 
 const app = express();
@@ -26,7 +29,9 @@ app.use('/api/texniki-gostericiler', texnikiGostericiRoutes);
 app.use('/api/printerler', printerRoutes);
 app.use('/api/proyektorlar', proyektorRoutes);
 app.use('/api/monitorlar', monitorRoutes);
+app.use('/api/monobloklar', monoblokRoutes); // Yeni: Monoblok route
 app.use('/api/statistika', avadanliqStatistikaRoutes); // YENİ
+app.use('/api/ip-telefonlar', IpTelefonRoutes); // Yeni: IP Telefon route
 // Auth routes
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
