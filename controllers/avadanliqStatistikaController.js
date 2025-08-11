@@ -1,3 +1,4 @@
+// controllers/statistikaController.js
 const Komputer = require('../models/Komputer');
 const Printer = require('../models/Printer');
 const Proyektor = require('../models/Proyektor');
@@ -6,6 +7,7 @@ const Monoblok = require('../models/Monoblok');
 const IpTelefon = require('../models/IpTelefon');
 const TexnikiGosterici = require('../models/TexnikiGosterici');
 
+// Bütün avadanlıqların ümumi sayını gətirən funksiya
 exports.umumiAvadanliqSaylari = async (req, res) => {
     try {
         const komputerSayiDetal = await Komputer.aggregate([
@@ -13,6 +15,7 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
         ]);
         const komputerSayi = komputerSayiDetal.length > 0 ? komputerSayiDetal[0].total : 0;
 
+        // Kompüter kateqoriyaları üzrə sayları hesabla
         const auditoriyaKomputerSayiDetal = await Komputer.aggregate([
             { $match: { kategoriya: 'Auditoriya' } },
             { $group: { _id: null, total: { $sum: "$say" } } }
@@ -30,12 +33,13 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
             { $group: { _id: null, total: { $sum: "$say" } } }
         ]);
         const akademikKomputerSayi = akademikKomputerSayiDetal.length > 0 ? akademikKomputerSayiDetal[0].total : 0;
-
+        
         const laboratoriyaKomputerSayiDetal = await Komputer.aggregate([
             { $match: { kategoriya: 'Laboratoriya' } },
             { $group: { _id: null, total: { $sum: "$say" } } }
         ]);
         const laboratoriyaKomputerSayi = laboratoriyaKomputerSayiDetal.length > 0 ? laboratoriyaKomputerSayiDetal[0].total : 0;
+
 
         const digerKomputerSayiDetal = await Komputer.aggregate([
             { $match: { kategoriya: 'Digər' } },
@@ -94,7 +98,24 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
         ]);
         const digerMonoblokSayi = digerMonoblokSayiDetal.length > 0 ? digerMonoblokSayiDetal[0].total : 0;
 
+
         const ipTelefonSayi = await IpTelefon.countDocuments();
+
+        // Texniki göstəriciləri əlavə et
+        const texnikiGostericiler = await TexnikiGosterici.find();
+        const texnikiGostericiSaylari = texnikiGostericiler.map(gosterici => ({
+            parametrAd: gosterici.parametrAd,
+            deyerler: gosterici.parametrinDeyerleri.map(deyer => ({
+                deyer: deyer.deyer,
+                say: deyer.say
+            }))
+        }));
+
+        // Texniki göstəricilərin ümumi sayını hesabla
+        const umumiTexnikiGostericiSayi = texnikiGostericiler.reduce((total, gosterici) => {
+            const sumOfValues = gosterici.parametrinDeyerleri.reduce((subtotal, deyer) => subtotal + deyer.say, 0);
+            return total + sumOfValues;
+        }, 0);
 
         res.status(200).json({
             komputerler: {
@@ -130,6 +151,10 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
             ipTelefonlar: {
                 umumiSay: ipTelefonSayi,
                 qeydler: "Ümumi IP telefon sayı."
+            },
+            texnikiGostericiler: {
+                umumiSay: umumiTexnikiGostericiSayi,
+                detallar: texnikiGostericiSaylari
             }
         });
     } catch (err) {
@@ -137,6 +162,7 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
     }
 };
 
+// Bu funksiyalar dəyişmir, lakin tam olması üçün daxil edilib
 exports.texnikiGostericiSaylari = async (req, res) => {
     try {
         const texnikiGostericiler = await TexnikiGosterici.find();
