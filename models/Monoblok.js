@@ -12,6 +12,12 @@ const monoblokSchema = new mongoose.Schema({
     required: [true, 'Say daxil edilməlidir.'],
     min: [0, 'Say mənfi ola bilməz.']
   },
+  kategoriya: { // Yeni: Kompüterin kateqoriyası
+    type: String,
+    required: [true, 'Kateqoriya daxil edilməlidir.'],
+    enum: ['Auditoriya', 'İnzibati', 'Akademik', 'Laboratoriya', 'Digər'], // Yalnız bu dəyərlərə icazə verilir
+    default: 'Auditoriya' // Default dəyər təyin edə bilərsiniz
+  },
   qeydler: {
     type: String,
     required: false, // Qeyd sahəsi optionaldır
