@@ -15,7 +15,7 @@ const komputerSchema = new mongoose.Schema({
   kategoriya: { // Yeni: Kompüterin kateqoriyası
     type: String,
     required: [true, 'Kateqoriya daxil edilməlidir.'],
-    enum: ['Auditoriya', 'İnzibati', 'Akademik', 'Digər'], // Yalnız bu dəyərlərə icazə verilir
+    enum: ['Auditoriya', 'İnzibati', 'Akademik', 'Laboratoriya', 'Digər'], // Yalnız bu dəyərlərə icazə verilir
     default: 'Auditoriya' // Default dəyər təyin edə bilərsiniz
   },
   qeydler: {

@@ -34,6 +34,14 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
     ]);
     const akademikKomputerSayi = akademikKomputerSayiDetal.length > 0 ? akademikKomputerSayiDetal[0].total : 0;
 
+    //Laboratoriya kompwter sayi
+
+    const laboratoriyaKomputerSayiDetal = await Komputer.aggregate([
+      { $match: { kategoriya: 'Laboratoriya' } },
+      { $group: { _id: null, total: { $sum: "$say" } } }
+    ]);
+    const laboratoriyaKomputerSayi = laboratoriyaKomputerSayiDetal.length > 0 ? laboratoriyaKomputerSayiDetal[0].total : 0;
+
     const digerKomputerSayiDetal = await Komputer.aggregate([
       { $match: { kategoriya: 'Digər' } },
       { $group: { _id: null, total: { $sum: "$say" } } }
@@ -69,6 +77,7 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
         auditoriyaSay: auditoriyaKomputerSayi,
         inzibatiSay: inzibatiKomputerSayi,
         akademikSay: akademikKomputerSayi,
+        laboratoriyaSay: laboratoriyaKomputerSayi,
         digerSay: digerKomputerSayi,
         qeydler: "Korpuslar üzrə ümumi kompüter sayı."
       },
