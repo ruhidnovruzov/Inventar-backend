@@ -12,6 +12,8 @@ const monitorRoutes = require('./routes/monitorRoutes');
 const avadanliqStatistikaRoutes = require('./routes/avadanliqStatistikaRoutes'); // YENİ
 const monoblokRoutes = require('./routes/monoblokRoutes.js'); // Yeni: Monoblok route
 const IpTelefonRoutes = require('./routes/ipTelefonRoutes'); // Yeni: IP Telefon route
+const warehouseRoutes = require('./routes/warehouseRoutes');
+
 
  
 
@@ -32,6 +34,7 @@ app.use('/api/monitorlar', monitorRoutes);
 app.use('/api/monobloklar', monoblokRoutes); // Yeni: Monoblok route
 app.use('/api/statistika', avadanliqStatistikaRoutes); // YENİ
 app.use('/api/ip-telefonlar', IpTelefonRoutes); // Yeni: IP Telefon route
+app.use('/api/anbar', warehouseRoutes); // Anbar məhsulları üçün route
 // Auth routes
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);

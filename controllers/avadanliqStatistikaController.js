@@ -6,6 +6,7 @@ const Monitor = require('../models/Monitor');
 const Monoblok = require('../models/Monoblok');
 const IpTelefon = require('../models/IpTelefon');
 const TexnikiGosterici = require('../models/TexnikiGosterici');
+const Anbar = require('../models/Warehouse'); // <-- Yeni əlavə olunan model
 
 // Bütün avadanlıqların ümumi sayını gətirən funksiya
 exports.umumiAvadanliqSaylari = async (req, res) => {
@@ -33,7 +34,7 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
             { $group: { _id: null, total: { $sum: "$say" } } }
         ]);
         const akademikKomputerSayi = akademikKomputerSayiDetal.length > 0 ? akademikKomputerSayiDetal[0].total : 0;
-        
+
         const laboratoriyaKomputerSayiDetal = await Komputer.aggregate([
             { $match: { kategoriya: 'Laboratoriya' } },
             { $group: { _id: null, total: { $sum: "$say" } } }
@@ -73,7 +74,7 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
             { $group: { _id: null, total: { $sum: "$say" } } }
         ]);
         const auditoriyaMonoblokSayi = auditoriyaMonoblokSayiDetal.length > 0 ? auditoriyaMonoblokSayiDetal[0].total : 0;
-        
+
         const inzibatiMonoblokSayiDetal = await Monoblok.aggregate([
             { $match: { kategoriya: 'İnzibati' } },
             { $group: { _id: null, total: { $sum: "$say" } } }
@@ -85,7 +86,7 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
             { $group: { _id: null, total: { $sum: "$say" } } }
         ]);
         const akademikMonoblokSayi = akademikMonoblokSayiDetal.length > 0 ? akademikMonoblokSayiDetal[0].total : 0;
-        
+
         const laboratoriyaMonoblokSayiDetal = await Monoblok.aggregate([
             { $match: { kategoriya: 'Laboratoriya' } },
             { $group: { _id: null, total: { $sum: "$say" } } }
@@ -100,6 +101,13 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
 
 
         const ipTelefonSayi = await IpTelefon.countDocuments();
+
+        // Anbar məhsullarının ümumi sayını hesabla
+        const anbarSayiDetal = await Anbar.aggregate([ // <-- Yeni əlavə olunan
+            { $group: { _id: null, total: { $sum: "$say" } } }
+        ]);
+        const anbarSayi = anbarSayiDetal.length > 0 ? anbarSayiDetal[0].total : 0; // <-- Yeni əlavə olunan
+
 
         // Texniki göstəriciləri əlavə et
         const texnikiGostericiler = await TexnikiGosterici.find();
@@ -151,6 +159,10 @@ exports.umumiAvadanliqSaylari = async (req, res) => {
             ipTelefonlar: {
                 umumiSay: ipTelefonSayi,
                 qeydler: "Ümumi IP telefon sayı."
+            },
+            anbar: { // <-- Yeni əlavə olunan
+                umumiSay: anbarSayi,
+                qeydler: "Anbarda olan məhsulların ümumi sayı."
             },
             texnikiGostericiler: {
                 umumiSay: umumiTexnikiGostericiSayi,
